@@ -23,6 +23,8 @@ import {
   calculateConsensus,
   calculateComparisonStats
 } from '../../models/prediction-result.model';
+import {environment} from '../../../environments/environment.development';
+import {HttpClient} from '@angular/common/http';
 
 @Component({
   selector: 'app-prediction',
@@ -36,6 +38,7 @@ export class Prediction implements OnInit {
   private route = inject(ActivatedRoute);
   private predictionService = inject(PredictionService);
   private firebaseHistory = inject(FirebaseHistoryService);
+  private http = inject(HttpClient);
 
   // État du formulaire
   formData: PredictionFormData = { ...DEFAULT_FORM_VALUES };
@@ -81,6 +84,19 @@ export class Prediction implements OnInit {
 
     // Charger des données d'exemple si disponibles
     this.loadSampleData();
+    this.checkBackendConnection();
+  }
+
+  private checkBackendConnection() {
+    this.http.get(`${environment.apiUrl}/api/health`).subscribe({
+      next: (response) => {
+        console.log('✅ Backend connecté:', response);
+      },
+      error: (error) => {
+        console.error('❌ Backend non disponible:', error);
+        alert('⚠️ Le backend Flask n\'est pas accessible. Démarrez-le avec "python app.py"');
+      }
+    });
   }
 
   // Charger des données d'exemple
@@ -208,10 +224,17 @@ export class Prediction implements OnInit {
       for (const model of Array.from(this.selectedModels)) {
         const startTime = Date.now();
 
+        // Ligne ~280 - Dans submitPrediction()
+
         try {
           const response = await this.predictionService
             .predictWithModel(model, apiData)
             .toPromise();
+
+          // ✅ VÉRIFIER SI C'EST UNE ERREUR
+          if ((response as any).error) {
+            throw new Error(`Modèle ${model} indisponible`);
+          }
 
           const modelConfig = MODEL_CONFIG[model];
           results.push({
@@ -224,20 +247,22 @@ export class Prediction implements OnInit {
             color: modelConfig.color,
             icon: modelConfig.icon
           });
+
         } catch (error) {
-          console.error(`Erreur avec le modèle ${model}:`, error);
-          // Ajouter un résultat d'erreur
-          const modelConfig = MODEL_CONFIG[model];
-          results.push({
-            model,
-            modelName: modelConfig.name,
-            displayName: modelConfig.displayName,
-            prediction: 'At Risk',
-            confidence: 0,
-            responseTime: Date.now() - startTime,
-            color: modelConfig.color,
-            icon: modelConfig.icon
-          });
+          console.error(`❌ Erreur avec le modèle ${model}:`, error);
+
+          // ✅ ALERTER L'UTILISATEUR
+          alert(`Le modèle ${model} n'a pas pu être contacté. Vérifiez que le backend Flask est actif sur http://localhost:5000`);
+
+          // Ne pas ajouter de résultat mock
+          continue; // Passer au modèle suivant
+        }
+        // Après la boucle de prédictions
+
+        if (results.length === 0) {
+          this.predictionState = 'error';
+          alert('❌ Aucun modèle ML n\'a pu être contacté. Assurez-vous que le backend Flask est actif.');
+          return;
         }
       }
 
