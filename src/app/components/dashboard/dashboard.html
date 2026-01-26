@@ -1,0 +1,199 @@
+<div class="dashboard-container">
+  <!-- Header Section -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="fade-in">
+          <i class="bi bi-speedometer2"></i>
+          Tableau de Bord
+        </h1>
+        <p class="subtitle">Vue d'ensemble du système de surveillance santé</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary btn-lg" (click)="goToPrediction()">
+          <i class="bi bi-plus-circle"></i>
+          Nouvelle Prédiction
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Quick Stats -->
+  <section class="quick-stats">
+    <div class="stat-card" *ngFor="let stat of quickStats; let i = index"
+         [style.animation-delay.ms]="i * 100">
+      <div class="stat-icon" [style.background]="stat.color + '20'" [style.color]="stat.color">
+        <i [class]="'bi ' + stat.icon"></i>
+      </div>
+      <div class="stat-content">
+        <h3 class="stat-label">{{ stat.label }}</h3>
+        <div class="stat-value-container">
+          <span class="stat-value">{{ stat.value }}</span>
+          <span class="stat-trend" [class.trend-up]="stat.trend === 'up'"
+                [class.trend-down]="stat.trend === 'down'">
+            <i class="bi" [class.bi-arrow-up]="stat.trend === 'up'"
+               [class.bi-arrow-down]="stat.trend === 'down'"
+               [class.bi-dash]="stat.trend === 'stable'"></i>
+            {{ stat.trendValue }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Models Overview -->
+  <section class="models-section">
+    <div class="section-header">
+      <h2>
+        <i class="bi bi-robot"></i>
+        Modèles de Machine Learning
+      </h2>
+      <p class="section-description">
+        Performance et statistiques des 4 modèles de prédiction
+      </p>
+    </div>
+
+    <div class="models-grid">
+      <div class="model-card" *ngFor="let model of modelCards; let i = index"
+           [style.animation-delay.ms]="i * 150">
+        <div class="model-header" [style.background]="'linear-gradient(135deg, ' + model.color + ' 0%, ' + model.color + 'dd 100%)'">
+          <div class="model-icon">
+            <i [class]="'bi ' + model.icon"></i>
+          </div>
+          <div class="model-info">
+            <h3 class="model-name">{{ model.displayName }}</h3>
+            <span class="model-badge">{{ model.name }}</span>
+          </div>
+        </div>
+
+        <div class="model-body">
+          <!-- Accuracy -->
+          <div class="metric">
+            <div class="metric-label">
+              <i class="bi bi-bullseye"></i>
+              Précision
+            </div>
+            <div class="metric-value">
+              <span class="value">{{ model.accuracy | number:'1.1-1' }}%</span>
+              <div class="progress-bar">
+                <div class="progress-fill"
+                     [style.width.%]="model.accuracy"
+                     [style.background]="model.color"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Predictions Count -->
+          <div class="metric">
+            <div class="metric-label">
+              <i class="bi bi-graph-up"></i>
+              Prédictions
+            </div>
+            <div class="metric-value">
+              <span class="value">{{ model.predictions | number }}</span>
+            </div>
+          </div>
+
+          <!-- Response Time -->
+          <div class="metric">
+            <div class="metric-label">
+              <i class="bi bi-lightning"></i>
+              Temps moyen
+            </div>
+            <div class="metric-value">
+              <span class="value">{{ model.avgResponseTime }}ms</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="model-footer">
+          <button class="btn-model" (click)="testModel(model.model)">
+            <i class="bi bi-play-circle"></i>
+            Tester ce modèle
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison Chart Section -->
+  <section class="comparison-section">
+    <div class="section-header">
+      <h2>
+        <i class="bi bi-bar-chart-line"></i>
+        Comparaison des Performances
+      </h2>
+      <p class="section-description">
+        Analyse comparative des 4 modèles ML
+      </p>
+    </div>
+
+    <div class="chart-container">
+      <div class="chart-bars">
+        <div class="chart-bar" *ngFor="let model of modelCards">
+          <div class="bar-label">{{ model.displayName }}</div>
+          <div class="bar-wrapper">
+            <div class="bar-fill"
+                 [style.width.%]="model.accuracy"
+                 [style.background]="model.color">
+              <span class="bar-value">{{ model.accuracy }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Actions -->
+  <section class="actions-section">
+    <div class="action-card" (click)="goToPrediction()">
+      <div class="action-icon">
+        <i class="bi bi-clipboard-pulse"></i>
+      </div>
+      <div class="action-content">
+        <h3>Nouvelle Prédiction</h3>
+        <p>Analyser la santé d'un nouveau-né</p>
+      </div>
+      <i class="bi bi-arrow-right action-arrow"></i>
+    </div>
+
+    <div class="action-card" (click)="goToComparison()">
+      <div class="action-icon">
+        <i class="bi bi-bar-chart-line"></i>
+      </div>
+      <div class="action-content">
+        <h3>Comparaison Modèles</h3>
+        <p>Comparer les 4 modèles ML</p>
+      </div>
+      <i class="bi bi-arrow-right action-arrow"></i>
+    </div>
+
+    <div class="action-card" (click)="goToHistory()">
+      <div class="action-icon">
+        <i class="bi bi-clock-history"></i>
+      </div>
+      <div class="action-content">
+        <h3>Historique</h3>
+        <p>Consulter les prédictions passées</p>
+      </div>
+      <i class="bi bi-arrow-right action-arrow"></i>
+    </div>
+  </section>
+
+  <!-- Health Status Banner -->
+<!--  <section class="health-banner" [class.banner-offline]="!systemOnline">-->
+<!--    <div class="banner-content">-->
+<!--      <div class="banner-icon">-->
+<!--        <i class="bi" [class.bi-shield-check]="systemOnline" [class.bi-shield-x]="!systemOnline"></i>-->
+<!--      </div>-->
+<!--      <div class="banner-text">-->
+<!--        <h3>{{ systemOnline ? 'Système Opérationnel' : 'Mode Hors Ligne' }}</h3>-->
+<!--        <p>{{ systemOnline ? 'Tous les modèles sont en ligne et prêts à analyser' : 'Données du cache local - Connexion perdue' }}</p>-->
+<!--      </div>-->
+<!--      <div class="banner-status">-->
+<!--        <span class="status-dot" [class.offline]="!systemOnline"></span>-->
+<!--        <span class="status-text">{{ systemOnline ? 'En ligne' : 'Hors ligne' }}</span>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </section>-->
+</div>

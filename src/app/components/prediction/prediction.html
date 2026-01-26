@@ -1,0 +1,638 @@
+<div class="prediction-container">
+  <!-- Header -->
+  <header class="prediction-header">
+    <div class="header-content">
+      <h1>
+        <i class="bi bi-clipboard-pulse"></i>
+        Prédiction de Santé
+      </h1>
+      <p class="subtitle">Analysez la santé d'un nouveau-né avec 4 modèles de Machine Learning</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-outline" type="button" (click)="resetForm()" [disabled]="predictionState === 'loading'">
+        <i class="bi bi-arrow-clockwise"></i>
+        Réinitialiser
+      </button>
+      <button class="btn btn-outline" type="button" (click)="fillRandomData()" [disabled]="predictionState === 'loading'">
+        <i class="bi bi-shuffle"></i>
+        Données test
+      </button>
+    </div>
+  </header>
+
+  <!-- Model Selection -->
+  <section class="model-selection-section">
+    <h2>
+      <i class="bi bi-robot"></i>
+      Sélection des Modèles ML
+    </h2>
+
+    <div class="model-selection-grid">
+      <div class="model-selector"
+           *ngFor="let modelInfo of availableModels"
+           [class.selected]="selectedModels.has(modelInfo.model)"
+           [style.border-color]="selectedModels.has(modelInfo.model) ? modelInfo.color : 'transparent'"
+           (click)="toggleModel(modelInfo.model)">
+        <div class="model-selector-icon" [style.background]="modelInfo.color">
+          <i [class]="'bi ' + modelInfo.icon"></i>
+        </div>
+        <div class="model-selector-info">
+          <h3>{{ modelInfo.displayName }}</h3>
+          <p>{{ modelInfo.description }}</p>
+        </div>
+        <div class="model-selector-check">
+          <i class="bi" [class.bi-check-circle-fill]="selectedModels.has(modelInfo.model)"
+             [class.bi-circle]="!selectedModels.has(modelInfo.model)"
+             [style.color]="selectedModels.has(modelInfo.model) ? modelInfo.color : '#CED4DA'"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="model-selection-actions">
+      <button class="btn-text" type="button" (click)="selectAllModels()">
+        <i class="bi bi-check-all"></i>
+        Tout sélectionner
+      </button>
+      <span class="model-count">{{ selectedModels.size }} modèle(s) sélectionné(s)</span>
+    </div>
+  </section>
+
+  <!-- Form -->
+  <form class="prediction-form" (ngSubmit)="submitPrediction()">
+    <!-- General Info -->
+    <div class="form-section">
+      <div class="form-section-header" [style.border-left-color]="'#4A90E2'">
+        <i class="bi bi-info-circle" [style.color]="'#4A90E2'"></i>
+        <h3>Informations Générales</h3>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">
+            <i class="bi bi-person"></i>
+            Nom du bébé (optionnel)
+          </label>
+          <input type="text" class="form-control" [(ngModel)]="formData.baby_name" name="baby_name" placeholder="Ex: Marie">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-gender-ambiguous"></i>
+            Genre
+          </label>
+          <select class="form-control" [(ngModel)]="formData.gender" name="gender" required>
+            <option value="Female">Féminin</option>
+            <option value="Male">Masculin</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Birth Data -->
+    <div class="form-section">
+      <div class="form-section-header" [style.border-left-color]="'#667eea'">
+        <i class="bi bi-calendar-heart" [style.color]="'#667eea'"></i>
+        <h3>Données de Naissance</h3>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-calendar-week"></i>
+            Âge gestationnel
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.gestational_age_weeks"
+                   name="gestational_age_weeks" (blur)="validateField('gestational_age_weeks')"
+                   min="24" max="44" step="0.1" required>
+            <span class="input-unit">semaines</span>
+          </div>
+          <small class="form-error" *ngIf="validationErrors.has('gestational_age_weeks')">
+            {{ validationErrors.get('gestational_age_weeks') }}
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-arrows-vertical"></i>
+            Poids de naissance
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.birth_weight_kg"
+                   name="birth_weight_kg" (blur)="validateField('birth_weight_kg')"
+                   min="0.5" max="6" step="0.01" required>
+            <span class="input-unit">kg</span>
+          </div>
+          <small class="form-error" *ngIf="validationErrors.has('birth_weight_kg')">
+            {{ validationErrors.get('birth_weight_kg') }}
+          </small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-rulers"></i>
+            Taille de naissance
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.birth_length_cm"
+                   name="birth_length_cm" (blur)="validateField('birth_length_cm')"
+                   min="30" max="65" step="0.1" required>
+            <span class="input-unit">cm</span>
+          </div>
+          <small class="form-error" *ngIf="validationErrors.has('birth_length_cm')">
+            {{ validationErrors.get('birth_length_cm') }}
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-circle"></i>
+            Périmètre crânien naissance
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.birth_head_circumference_cm"
+                   name="birth_head_circumference_cm" (blur)="validateField('birth_head_circumference_cm')"
+                   min="25" max="40" step="0.1" required>
+            <span class="input-unit">cm</span>
+          </div>
+          <small class="form-error" *ngIf="validationErrors.has('birth_head_circumference_cm')">
+            {{ validationErrors.get('birth_head_circumference_cm') }}
+          </small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-star"></i>
+            Score APGAR
+          </label>
+          <input type="number" class="form-control" [(ngModel)]="formData.apgar_score"
+                 name="apgar_score" (blur)="validateField('apgar_score')"
+                 min="0" max="10" step="1" required>
+          <small class="form-hint">Score de vitalité à la naissance (0-10)</small>
+          <small class="form-error" *ngIf="validationErrors.has('apgar_score')">
+            {{ validationErrors.get('apgar_score') }}
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Current Data -->
+    <div class="form-section">
+      <div class="form-section-header" [style.border-left-color]="'#f5576c'">
+        <i class="bi bi-person-badge" [style.color]="'#f5576c'"></i>
+        <h3>Données Actuelles</h3>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-calendar-check"></i>
+            Âge actuel
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.age_days"
+                   name="age_days" (blur)="validateField('age_days')"
+                   min="0" max="365" step="1" required>
+            <span class="input-unit">jours</span>
+          </div>
+          <small class="form-error" *ngIf="validationErrors.has('age_days')">
+            {{ validationErrors.get('age_days') }}
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-arrows-vertical"></i>
+            Poids actuel
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.weight_kg"
+                   name="weight_kg" (blur)="validateField('weight_kg')"
+                   min="0.5" max="15" step="0.01" required>
+            <span class="input-unit">kg</span>
+          </div>
+          <small class="form-error" *ngIf="validationErrors.has('weight_kg')">
+            {{ validationErrors.get('weight_kg') }}
+          </small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-rulers"></i>
+            Taille actuelle
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.length_cm"
+                   name="length_cm" (blur)="validateField('length_cm')"
+                   min="30" max="100" step="0.1" required>
+            <span class="input-unit">cm</span>
+          </div>
+          <small class="form-error" *ngIf="validationErrors.has('length_cm')">
+            {{ validationErrors.get('length_cm') }}
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-circle"></i>
+            Périmètre crânien actuel
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.head_circumference_cm"
+                   name="head_circumference_cm" (blur)="validateField('head_circumference_cm')"
+                   min="25" max="50" step="0.1" required>
+            <span class="input-unit">cm</span>
+          </div>
+          <small class="form-error" *ngIf="validationErrors.has('head_circumference_cm')">
+            {{ validationErrors.get('head_circumference_cm') }}
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vital Signs -->
+    <div class="form-section">
+      <div class="form-section-header" [style.border-left-color]="'#E74C3C'">
+        <i class="bi bi-heart-pulse" [style.color]="'#E74C3C'"></i>
+        <h3>Signes Vitaux</h3>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-thermometer"></i>
+            Température
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.temperature_c"
+                   name="temperature_c" (blur)="validateField('temperature_c')"
+                   min="35" max="42" step="0.1" required>
+            <span class="input-unit">°C</span>
+          </div>
+          <small class="form-hint">Normale: 36.5-37.5°C</small>
+          <small class="form-error" *ngIf="validationErrors.has('temperature_c')">
+            {{ validationErrors.get('temperature_c') }}
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-heart"></i>
+            Fréquence cardiaque
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.heart_rate_bpm"
+                   name="heart_rate_bpm" (blur)="validateField('heart_rate_bpm')"
+                   min="80" max="200" step="1" required>
+            <span class="input-unit">bpm</span>
+          </div>
+          <small class="form-hint">Normale: 120-160 bpm</small>
+          <small class="form-error" *ngIf="validationErrors.has('heart_rate_bpm')">
+            {{ validationErrors.get('heart_rate_bpm') }}
+          </small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-lungs"></i>
+            Fréquence respiratoire
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.respiratory_rate_bpm"
+                   name="respiratory_rate_bpm" (blur)="validateField('respiratory_rate_bpm')"
+                   min="20" max="80" step="1" required>
+            <span class="input-unit">bpm</span>
+          </div>
+          <small class="form-hint">Normale: 30-60 bpm</small>
+          <small class="form-error" *ngIf="validationErrors.has('respiratory_rate_bpm')">
+            {{ validationErrors.get('respiratory_rate_bpm') }}
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-droplet-half"></i>
+            Saturation en oxygène
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.oxygen_saturation"
+                   name="oxygen_saturation" (blur)="validateField('oxygen_saturation')"
+                   min="80" max="100" step="1" required>
+            <span class="input-unit">%</span>
+          </div>
+          <small class="form-hint">Normale: ≥ 95%</small>
+          <small class="form-error" *ngIf="validationErrors.has('oxygen_saturation')">
+            {{ validationErrors.get('oxygen_saturation') }}
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feeding -->
+    <div class="form-section">
+      <div class="form-section-header" [style.border-left-color]="'#5FCF80'">
+        <i class="bi bi-cup-straw" [style.color]="'#5FCF80'"></i>
+        <h3>Alimentation</h3>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-egg"></i>
+            Type d'alimentation
+          </label>
+          <select class="form-control" [(ngModel)]="formData.feeding_type" name="feeding_type" required>
+            <option value="Breastfeeding">Allaitement maternel</option>
+            <option value="Formula">Lait infantile</option>
+            <option value="Mixed">Mixte</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-clock"></i>
+            Fréquence d'alimentation
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.feeding_frequency_per_day"
+                   name="feeding_frequency_per_day" (blur)="validateField('feeding_frequency_per_day')"
+                   min="1" max="20" step="1" required>
+            <span class="input-unit">fois/jour</span>
+          </div>
+          <small class="form-hint">Normale: 8-12 fois/jour</small>
+          <small class="form-error" *ngIf="validationErrors.has('feeding_frequency_per_day')">
+            {{ validationErrors.get('feeding_frequency_per_day') }}
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Elimination -->
+    <div class="form-section">
+      <div class="form-section-header" [style.border-left-color]="'#00f2fe'">
+        <i class="bi bi-droplet" [style.color]="'#00f2fe'"></i>
+        <h3>Élimination</h3>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-droplet"></i>
+            Nombre de mictions
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.urine_output_count"
+                   name="urine_output_count" (blur)="validateField('urine_output_count')"
+                   min="0" max="20" step="1" required>
+            <span class="input-unit">par jour</span>
+          </div>
+          <small class="form-hint">Normale: 6-8 par jour</small>
+          <small class="form-error" *ngIf="validationErrors.has('urine_output_count')">
+            {{ validationErrors.get('urine_output_count') }}
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-circle-fill"></i>
+            Nombre de selles
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.stool_count"
+                   name="stool_count" (blur)="validateField('stool_count')"
+                   min="0" max="15" step="1" required>
+            <span class="input-unit">par jour</span>
+          </div>
+          <small class="form-hint">Normale: 3-8 par jour</small>
+          <small class="form-error" *ngIf="validationErrors.has('stool_count')">
+            {{ validationErrors.get('stool_count') }}
+          </small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Medical Observations -->
+    <div class="form-section">
+      <div class="form-section-header" [style.border-left-color]="'#F5A623'">
+        <i class="bi bi-clipboard2-pulse" [style.color]="'#F5A623'"></i>
+        <h3>Observations Médicales</h3>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-brightness-high"></i>
+            Niveau de jaunisse (bilirubine)
+          </label>
+          <div class="input-with-unit">
+            <input type="number" class="form-control" [(ngModel)]="formData.jaundice_level_mg_dl"
+                   name="jaundice_level_mg_dl" (blur)="validateField('jaundice_level_mg_dl')"
+                   min="0" max="25" step="0.1" required>
+            <span class="input-unit">mg/dL</span>
+          </div>
+          <small class="form-hint">Attention si > 10 mg/dL</small>
+          <small class="form-error" *ngIf="validationErrors.has('jaundice_level_mg_dl')">
+            {{ validationErrors.get('jaundice_level_mg_dl') }}
+          </small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-shield-check"></i>
+            Vaccinations effectuées
+          </label>
+          <select class="form-control" [(ngModel)]="formData.immunizations_done" name="immunizations_done" required>
+            <option value="Yes">Oui</option>
+            <option value="No">Non</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label required">
+            <i class="bi bi-activity"></i>
+            Réflexes normaux
+          </label>
+          <select class="form-control" [(ngModel)]="formData.reflexes_normal" name="reflexes_normal" required>
+            <option value="Yes">Oui</option>
+            <option value="No">Non</option>
+          </select>
+          <small class="form-hint">Réflexes de succion, marche automatique, etc.</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-lg btn-submit"
+              [disabled]="predictionState === 'loading' || selectedModels.size === 0">
+        <i class="bi" [class.bi-hourglass-split]="predictionState === 'loading'"
+           [class.bi-rocket]="predictionState !== 'loading'"></i>
+        <span *ngIf="predictionState !== 'loading'">Lancer la Prédiction</span>
+        <span *ngIf="predictionState === 'loading'">Analyse en cours...</span>
+      </button>
+
+      <p class="form-actions-hint" *ngIf="selectedModels.size > 0">
+        <i class="bi bi-info-circle"></i>
+        {{ selectedModels.size }} modèle(s) sélectionné(s) pour l'analyse
+      </p>
+    </div>
+  </form>
+
+  <!-- Loading State -->
+  <div class="loading-section" *ngIf="predictionState === 'loading'">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <h3>Analyse en cours...</h3>
+      <p>Les modèles ML analysent les données du nouveau-né</p>
+      <div class="loading-models">
+        <div class="loading-model" *ngFor="let modelInfo of availableModels"
+             [class.active]="selectedModels.has(modelInfo.model)">
+          <i [class]="'bi ' + modelInfo.icon" [style.color]="modelInfo.color"></i>
+          <span>{{ modelInfo.displayName }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <div class="results-section" id="results-section" *ngIf="predictionState === 'success' && result">
+    <!-- Consensus Result -->
+    <div class="consensus-card" [class.healthy]="result.consensus === 'Healthy'"
+         [class.at-risk]="result.consensus === 'At Risk'">
+      <div class="consensus-icon">
+        <i class="bi" [class.bi-heart-pulse-fill]="result.consensus === 'Healthy'"
+           [class.bi-exclamation-triangle-fill]="result.consensus === 'At Risk'"></i>
+      </div>
+      <div class="consensus-content">
+        <h2>Résultat du Consensus</h2>
+        <div class="consensus-result">
+          <span class="consensus-label">{{ result.consensus === 'Healthy' ? 'Bébé en Bonne Santé' : 'Bébé À Risque' }}</span>
+          <span class="consensus-confidence">{{ result.consensusConfidence | number:'1.1-1' }}% de confiance</span>
+        </div>
+        <div class="consensus-stats">
+          <span><strong>{{ result.healthyCount }}</strong> modèle(s) : Sain</span>
+          <span><strong>{{ result.atRiskCount }}</strong> modèle(s) : À risque</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Individual Model Results -->
+    <section class="models-results">
+      <h2>
+        <i class="bi bi-bar-chart-line"></i>
+        Résultats par Modèle
+      </h2>
+
+      <div class="models-results-grid">
+        <div class="model-result-card" *ngFor="let model of result.models">
+          <div class="model-result-header" [style.background]="model.color">
+            <i [class]="'bi ' + model.icon"></i>
+            <h3>{{ model.displayName }}</h3>
+          </div>
+          <div class="model-result-body">
+            <div class="result-prediction" [class.healthy]="model.prediction === 'Healthy'"
+                 [class.at-risk]="model.prediction === 'At Risk'">
+              <i class="bi" [class.bi-check-circle]="model.prediction === 'Healthy'"
+                 [class.bi-exclamation-circle]="model.prediction === 'At Risk'"></i>
+              <span>{{ model.prediction === 'Healthy' ? 'Sain' : 'À Risque' }}</span>
+            </div>
+            <div class="result-metrics">
+              <div class="result-metric">
+                <span class="metric-label">Confiance</span>
+                <span class="metric-value">{{ model.confidence | number:'1.1-1' }}%</span>
+                <div class="metric-bar">
+                  <div class="metric-bar-fill" [style.width.%]="model.confidence"
+                       [style.background]="model.color"></div>
+                </div>
+              </div>
+              <div class="result-metric">
+                <span class="metric-label">Temps de réponse</span>
+                <span class="metric-value">{{ model.responseTime }}ms</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Risk Factors -->
+    <section class="risk-factors-section" *ngIf="riskFactors.length > 0">
+      <h2>
+        <i class="bi bi-exclamation-triangle"></i>
+        Facteurs de Risque Détectés
+      </h2>
+
+      <div class="risk-factors-grid">
+        <div class="risk-factor-card" *ngFor="let factor of riskFactors"
+             [class.severity-low]="factor.severity === 'low'"
+             [class.severity-medium]="factor.severity === 'medium'"
+             [class.severity-high]="factor.severity === 'high'">
+          <i [class]="'bi ' + factor.icon" [style.color]="factor.color"></i>
+          <div class="risk-factor-content">
+            <h4>{{ factor.field }}</h4>
+            <p>{{ factor.message }}</p>
+            <span class="risk-factor-value">Valeur: {{ factor.value }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Recommendations -->
+    <section class="recommendations-section" *ngIf="recommendations.length > 0">
+      <h2>
+        <i class="bi bi-lightbulb"></i>
+        Recommandations
+      </h2>
+
+      <div class="recommendations-list">
+        <div class="recommendation-card" *ngFor="let rec of recommendations"
+             [class.priority-low]="rec.priority === 'low'"
+             [class.priority-medium]="rec.priority === 'medium'"
+             [class.priority-high]="rec.priority === 'high'"
+             [class.priority-urgent]="rec.priority === 'urgent'">
+          <i [class]="'bi ' + rec.icon" [style.color]="rec.color"></i>
+          <div class="recommendation-content">
+            <h4>{{ rec.title }}</h4>
+            <p>{{ rec.description }}</p>
+          </div>
+          <span class="recommendation-priority">{{ rec.priority }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <div class="results-actions">
+      <button class="btn btn-primary" type="button" (click)="newPrediction()">
+        <i class="bi bi-plus-circle"></i>
+        Nouvelle Prédiction
+      </button>
+      <button class="btn btn-outline" type="button" (click)="saveToHistory()">
+        <i class="bi bi-save"></i>
+        Sauvegarder dans l'Historique
+      </button>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-section" *ngIf="predictionState === 'error'">
+    <div class="error-content">
+      <i class="bi bi-exclamation-circle"></i>
+      <h3>Erreur lors de la prédiction</h3>
+      <p>Une erreur s'est produite lors de l'analyse. Veuillez réessayer.</p>
+      <button class="btn btn-primary" type="button" (click)="predictionState = 'idle'">
+        Réessayer
+      </button>
+    </div>
+  </div>
+</div>

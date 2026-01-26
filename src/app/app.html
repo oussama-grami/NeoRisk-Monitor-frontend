@@ -1,0 +1,63 @@
+<div class="app-container">
+  <!-- Navigation Header -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <i class="bi bi-heart-pulse-fill"></i>
+      <span class="brand-title">NeoRisk Monitor</span>
+      <span class="brand-subtitle">ML Health Prediction System</span>
+    </div>
+
+    <ul class="navbar-menu">
+      <li>
+        <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">
+          <i class="bi bi-speedometer2"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/prediction" routerLinkActive="active" class="nav-link">
+          <i class="bi bi-clipboard-pulse"></i>
+          <span>Prédiction</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/comparison" routerLinkActive="active" class="nav-link">
+          <i class="bi bi-bar-chart-line"></i>
+          <span>Comparaison</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/history" routerLinkActive="active" class="nav-link">
+          <i class="bi bi-clock-history"></i>
+          <span>Historique</span>
+        </a>
+      </li>
+    </ul>
+
+<!--    <div class="navbar-actions">-->
+<!--      <button class="btn-icon" title="Notifications">-->
+<!--        <i class="bi bi-bell"></i>-->
+<!--        <span class="notification-badge">3</span>-->
+<!--      </button>-->
+<!--      <button class="btn-icon" title="Paramètres">-->
+<!--        <i class="bi bi-gear"></i>-->
+<!--      </button>-->
+<!--    </div>-->
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-content">
+      <p>
+        <i class="bi bi-shield-check"></i>
+        NeoRisk Monitor - Système de surveillance santé des nouveau-nés
+      </p>
+
+    </div>
+  </footer>
+</div>

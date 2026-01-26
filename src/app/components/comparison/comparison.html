@@ -1,0 +1,407 @@
+<div class="comparison-container">
+  <!-- Header -->
+  <header class="comparison-header">
+    <div class="header-content">
+      <h1>
+        <i class="bi bi-bar-chart-line"></i>
+        Comparaison des Modèles
+      </h1>
+      <p class="subtitle">Analyse comparative des performances des 4 modèles de Machine Learning</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-outline" type="button" (click)="refreshData()">
+        <i class="bi bi-arrow-clockwise"></i>
+        Actualiser
+      </button>
+      <button class="btn btn-outline" type="button" (click)="exportData()">
+        <i class="bi bi-download"></i>
+        Exporter
+      </button>
+    </div>
+  </header>
+
+  <!-- View Mode Selector -->
+  <section class="view-selector">
+    <div class="view-buttons">
+      <button class="view-btn" [class.active]="viewMode === 'grid'" type="button" (click)="changeViewMode('grid')">
+        <i class="bi bi-grid-3x3"></i>
+        Grille
+      </button>
+      <button class="view-btn" [class.active]="viewMode === 'table'" type="button" (click)="changeViewMode('table')">
+        <i class="bi bi-table"></i>
+        Tableau
+      </button>
+      <button class="view-btn" [class.active]="viewMode === 'chart'" type="button" (click)="changeViewMode('chart')">
+        <i class="bi bi-bar-chart"></i>
+        Graphiques
+      </button>
+    </div>
+
+    <div class="sort-controls">
+      <label>Trier par :</label>
+      <select class="form-control" [(ngModel)]="config.sortBy" (change)="sortData()">
+        <option *ngFor="let criterion of availableCriteria" [value]="criterion.value">
+          {{ criterion.label }}
+        </option>
+      </select>
+      <button class="btn-icon" type="button" (click)="config.ascending = !config.ascending; sortData()">
+        <i class="bi" [class.bi-sort-down]="!config.ascending" [class.bi-sort-up]="config.ascending"></i>
+      </button>
+    </div>
+  </section>
+
+  <!-- Top Performers -->
+  <section class="top-performers" *ngIf="stats">
+    <h2>
+      <i class="bi bi-trophy"></i>
+      Meilleurs Performances
+    </h2>
+
+    <div class="performers-grid">
+      <div class="performer-card">
+        <div class="performer-icon" [style.background]="stats.bestAccuracy.color">
+          <i class="bi bi-award"></i>
+        </div>
+        <div class="performer-content">
+          <h3>Meilleure Précision</h3>
+          <p class="performer-model">{{ stats.bestAccuracy.displayName }}</p>
+          <p class="performer-value">{{ stats.bestAccuracy.accuracy }}%</p>
+        </div>
+      </div>
+
+      <div class="performer-card">
+        <div class="performer-icon" [style.background]="stats.fastestModel.color">
+          <i class="bi bi-lightning"></i>
+        </div>
+        <div class="performer-content">
+          <h3>Plus Rapide</h3>
+          <p class="performer-model">{{ stats.fastestModel.displayName }}</p>
+          <p class="performer-value">{{ stats.fastestModel.avgResponseTime }}ms</p>
+        </div>
+      </div>
+
+      <div class="performer-card">
+        <div class="performer-icon" [style.background]="stats.mostUsed.color">
+          <i class="bi bi-graph-up-arrow"></i>
+        </div>
+        <div class="performer-content">
+          <h3>Plus Utilisé</h3>
+          <p class="performer-model">{{ stats.mostUsed.displayName }}</p>
+          <p class="performer-value">{{ stats.mostUsed.totalPredictions }} prédictions</p>
+        </div>
+      </div>
+
+      <div class="performer-card">
+        <div class="performer-icon" [style.background]="stats.bestF1Score.color">
+          <i class="bi bi-star"></i>
+        </div>
+        <div class="performer-content">
+          <h3>Meilleur Score F1</h3>
+          <p class="performer-model">{{ stats.bestF1Score.displayName }}</p>
+          <p class="performer-value">{{ stats.bestF1Score.f1Score }}%</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Grid View -->
+  <section class="models-comparison" *ngIf="viewMode === 'grid'">
+    <h2>
+      <i class="bi bi-grid-3x3"></i>
+      Vue en Grille
+    </h2>
+
+    <div class="models-grid">
+      <div class="model-card" *ngFor="let perf of performances">
+        <div class="model-header" [style.background]="perf.color">
+          <div class="model-icon">
+            <i [class]="'bi ' + perf.icon"></i>
+          </div>
+          <div class="model-info">
+            <h3>{{ perf.displayName }}</h3>
+            <span class="model-rank">#{{ getModelRank(perf) }}</span>
+          </div>
+        </div>
+
+        <div class="model-body">
+          <div class="metric-item">
+            <div class="metric-header">
+              <i class="bi bi-bullseye"></i>
+              <span>Précision</span>
+            </div>
+            <div class="metric-value-container">
+              <span class="metric-value">{{ perf.accuracy | number:'1.1-1' }}%</span>
+              <div class="metric-bar">
+                <div class="metric-fill" [style.width.%]="perf.accuracy" [style.background]="perf.color"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric-item">
+            <div class="metric-header">
+              <i class="bi bi-check-circle"></i>
+              <span>Précision ML</span>
+            </div>
+            <div class="metric-value-container">
+              <span class="metric-value">{{ perf.precision | number:'1.1-1' }}%</span>
+              <div class="metric-bar">
+                <div class="metric-fill" [style.width.%]="perf.precision" [style.background]="perf.color"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric-item">
+            <div class="metric-header">
+              <i class="bi bi-arrow-repeat"></i>
+              <span>Rappel</span>
+            </div>
+            <div class="metric-value-container">
+              <span class="metric-value">{{ perf.recall | number:'1.1-1' }}%</span>
+              <div class="metric-bar">
+                <div class="metric-fill" [style.width.%]="perf.recall" [style.background]="perf.color"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric-item">
+            <div class="metric-header">
+              <i class="bi bi-graph-up"></i>
+              <span>Score F1</span>
+            </div>
+            <div class="metric-value-container">
+              <span class="metric-value">{{ perf.f1Score | number:'1.1-1' }}%</span>
+              <div class="metric-bar">
+                <div class="metric-fill" [style.width.%]="perf.f1Score" [style.background]="perf.color"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="metric-item">
+            <div class="metric-header">
+              <i class="bi bi-lightning"></i>
+              <span>Temps moyen</span>
+            </div>
+            <div class="metric-value-container">
+              <span class="metric-value">{{ perf.avgResponseTime }}ms</span>
+            </div>
+          </div>
+
+          <div class="metric-item">
+            <div class="metric-header">
+              <i class="bi bi-calendar-check"></i>
+              <span>Total prédictions</span>
+            </div>
+            <div class="metric-value-container">
+              <span class="metric-value">{{ perf.totalPredictions }}</span>
+            </div>
+          </div>
+
+          <div class="metric-item">
+            <div class="metric-header">
+              <i class="bi bi-check-all"></i>
+              <span>Taux de succès</span>
+            </div>
+            <div class="metric-value-container">
+              <span class="metric-value">{{ perf.successRate | number:'1.1-1' }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="model-footer">
+          <button class="btn-model" type="button" (click)="testModel(perf.modelName)">
+            <i class="bi bi-play-circle"></i>
+            Tester ce modèle
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Table View -->
+  <section class="table-view" *ngIf="viewMode === 'table'">
+    <h2>
+      <i class="bi bi-table"></i>
+      Vue Tableau
+    </h2>
+
+    <div class="table-container">
+      <table class="comparison-table">
+        <thead>
+        <tr>
+          <th (click)="changeSortCriterion('accuracy')">
+            <span>Modèle</span>
+          </th>
+          <th (click)="changeSortCriterion('accuracy')">
+            <span>Précision</span>
+            <i class="bi bi-arrow-down-up sort-icon"></i>
+          </th>
+          <th (click)="changeSortCriterion('precision')">
+            <span>Précision ML</span>
+            <i class="bi bi-arrow-down-up sort-icon"></i>
+          </th>
+          <th (click)="changeSortCriterion('recall')">
+            <span>Rappel</span>
+            <i class="bi bi-arrow-down-up sort-icon"></i>
+          </th>
+          <th (click)="changeSortCriterion('f1score')">
+            <span>Score F1</span>
+            <i class="bi bi-arrow-down-up sort-icon"></i>
+          </th>
+          <th (click)="changeSortCriterion('speed')">
+            <span>Vitesse</span>
+            <i class="bi bi-arrow-down-up sort-icon"></i>
+          </th>
+          <th>Prédictions</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let perf of performances">
+          <td>
+            <div class="model-cell">
+              <div class="model-color" [style.background]="perf.color"></div>
+              <i [class]="'bi ' + perf.icon" [style.color]="perf.color"></i>
+              <span class="model-name">{{ perf.displayName }}</span>
+            </div>
+          </td>
+          <td>
+              <span class="metric-badge" [style.background]="getPerformanceBadgeColor(perf.accuracy)">
+                {{ perf.accuracy | number:'1.1-1' }}%
+              </span>
+          </td>
+          <td>{{ perf.precision | number:'1.1-1' }}%</td>
+          <td>{{ perf.recall | number:'1.1-1' }}%</td>
+          <td>{{ perf.f1Score | number:'1.1-1' }}%</td>
+          <td>{{ perf.avgResponseTime }}ms</td>
+          <td>{{ perf.totalPredictions }}</td>
+          <td>
+            <button class="btn-small" type="button" (click)="testModel(perf.modelName)">
+              <i class="bi bi-play"></i>
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Chart View -->
+  <section class="chart-view" *ngIf="viewMode === 'chart'">
+    <h2>
+      <i class="bi bi-bar-chart"></i>
+      Vue Graphiques
+    </h2>
+
+    <div class="metric-selector">
+      <button class="metric-btn" *ngFor="let criterion of availableCriteria"
+              [class.active]="selectedMetric === criterion.value"
+              type="button"
+              (click)="changeMetric(criterion.value)">
+        <i [class]="'bi ' + criterion.icon"></i>
+        {{ criterion.label }}
+      </button>
+    </div>
+
+    <div class="charts-grid">
+      <!-- Bar Chart -->
+      <div class="chart-card">
+        <h3>Comparaison : {{ getMetricLabel(selectedMetric) }}</h3>
+        <div class="bar-chart">
+          <div class="bar-item" *ngFor="let perf of performances">
+            <div class="bar-label">
+              <i [class]="'bi ' + perf.icon" [style.color]="perf.color"></i>
+              <span>{{ perf.displayName }}</span>
+            </div>
+            <div class="bar-container">
+              <div class="bar-fill"
+                   [style.width.%]="getPercentageOfBest(perf, selectedMetric)"
+                   [style.background]="perf.color">
+                <span class="bar-value">
+                  {{ getMetricValue(perf, selectedMetric) }}{{ getMetricUnit(selectedMetric) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Radar Chart (Toutes les métriques) -->
+      <div class="chart-card">
+        <h3>Vue d'ensemble des performances</h3>
+        <div class="overview-grid">
+          <div class="overview-item" *ngFor="let perf of performances">
+            <div class="overview-header" [style.background]="perf.color">
+              <i [class]="'bi ' + perf.icon"></i>
+              <span>{{ perf.displayName }}</span>
+            </div>
+            <div class="overview-metrics">
+              <div class="overview-metric">
+                <span class="metric-label">Précision</span>
+                <span class="metric-value">{{ perf.accuracy | number:'1.1-1' }}%</span>
+              </div>
+              <div class="overview-metric">
+                <span class="metric-label">F1</span>
+                <span class="metric-value">{{ perf.f1Score | number:'1.1-1' }}%</span>
+              </div>
+              <div class="overview-metric">
+                <span class="metric-label">Vitesse</span>
+                <span class="metric-value">{{ perf.avgResponseTime }}ms</span>
+              </div>
+              <div class="overview-metric">
+                <span class="metric-label">Succès</span>
+                <span class="metric-value">{{ perf.successRate | number:'1.1-1' }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Recommendations -->
+  <section class="recommendations">
+    <h2>
+      <i class="bi bi-lightbulb"></i>
+      Recommandations
+    </h2>
+
+    <div class="recommendation-cards">
+      <div class="recommendation-card" *ngIf="stats">
+        <i class="bi bi-award" style="color: #667eea;"></i>
+        <div class="recommendation-content">
+          <h4>Pour la meilleure précision</h4>
+          <p>Utilisez <strong>{{ stats.bestAccuracy.displayName }}</strong> avec {{ stats.bestAccuracy.accuracy | number:'1.1-1' }}% de précision</p>
+        </div>
+      </div>
+
+      <div class="recommendation-card" *ngIf="stats">
+        <i class="bi bi-lightning" style="color: #f5576c;"></i>
+        <div class="recommendation-content">
+          <h4>Pour les temps de réponse rapides</h4>
+          <p>Utilisez <strong>{{ stats.fastestModel.displayName }}</strong> avec seulement {{ stats.fastestModel.avgResponseTime }}ms</p>
+        </div>
+      </div>
+
+      <div class="recommendation-card" *ngIf="stats">
+        <i class="bi bi-star" style="color: #00f2fe;"></i>
+        <div class="recommendation-content">
+          <h4>Pour un équilibre optimal</h4>
+          <p>Utilisez <strong>{{ stats.bestF1Score.displayName }}</strong> avec un score F1 de {{ stats.bestF1Score.f1Score | number:'1.1-1' }}%</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Actions -->
+  <section class="comparison-actions">
+    <button class="btn btn-primary" type="button" (click)="goToDashboard()">
+      <i class="bi bi-speedometer2"></i>
+      Retour au Dashboard
+    </button>
+    <button class="btn btn-outline" type="button" (click)="router.navigate(['/prediction'])">
+      <i class="bi bi-clipboard-pulse"></i>
+      Nouvelle Prédiction
+    </button>
+  </section>
+</div>

@@ -1,0 +1,347 @@
+<div class="history-container">
+  <!-- Header -->
+  <header class="history-header">
+    <div class="header-content">
+      <h1>
+        <i class="bi bi-clock-history"></i>
+        Historique des Prédictions
+      </h1>
+      <p class="subtitle">Consultez et analysez toutes les prédictions passées</p>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-outline" type="button" (click)="refresh()">
+        <i class="bi bi-arrow-clockwise"></i>
+        Actualiser
+      </button>
+      <button class="btn btn-outline" type="button" (click)="exportData('csv')">
+        <i class="bi bi-file-earmark-spreadsheet"></i>
+        CSV
+      </button>
+      <button class="btn btn-outline" type="button" (click)="exportData('json')">
+        <i class="bi bi-file-earmark-code"></i>
+        JSON
+      </button>
+    </div>
+  </header>
+
+  <!-- Statistics -->
+  <section class="statistics-section" *ngIf="stats">
+    <div class="stat-card">
+      <div class="stat-icon" style="background: #4A90E2;">
+        <i class="bi bi-graph-up-arrow"></i>
+      </div>
+      <div class="stat-content">
+        <h3>Total Prédictions</h3>
+        <p class="stat-value">{{ stats.totalPredictions }}</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: #5FCF80;">
+        <i class="bi bi-heart-pulse-fill"></i>
+      </div>
+      <div class="stat-content">
+        <h3>Bébés Sains</h3>
+        <p class="stat-value">{{ stats.healthyPredictions }} ({{ (stats.healthyPredictions / stats.totalPredictions * 100) | number:'1.0-0' }}%)</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: #E74C3C;">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+      </div>
+      <div class="stat-content">
+        <h3>Bébés À Risque</h3>
+        <p class="stat-value">{{ stats.atRiskPredictions }} ({{ (stats.atRiskPredictions / stats.totalPredictions * 100) | number:'1.0-0' }}%)</p>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" [style.background]="getTrendColor(stats.recentTrend)">
+        <i [class]="'bi ' + getTrendIcon(stats.recentTrend)"></i>
+      </div>
+      <div class="stat-content">
+        <h3>Tendance Récente</h3>
+        <p class="stat-value">
+          {{ stats.recentTrend === 'improving' ? 'En amélioration' :
+          stats.recentTrend === 'declining' ? 'En baisse' : 'Stable' }}
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filters -->
+  <section class="filters-section">
+    <div class="filters-container">
+      <div class="filter-group">
+        <label>
+          <i class="bi bi-search"></i>
+          Rechercher
+        </label>
+        <input type="text"
+               class="form-control"
+               [(ngModel)]="filters.searchQuery"
+               (input)="onSearch()"
+               placeholder="Nom du bébé ou ID...">
+      </div>
+
+      <div class="filter-group">
+        <label>
+          <i class="bi bi-funnel"></i>
+          Consensus
+        </label>
+        <select class="form-control"
+                [(ngModel)]="filters.consensus"
+                (change)="onConsensusFilterChange()">
+          <option value="All">Tous</option>
+          <option value="Healthy">Sains uniquement</option>
+          <option value="At Risk">À risque uniquement</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>
+          <i class="bi bi-robot"></i>
+          Modèle
+        </label>
+        <select class="form-control"
+                [(ngModel)]="filters.model"
+                (change)="onModelFilterChange()">
+          <option *ngFor="let option of modelOptions" [value]="option.value">
+            {{ option.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>
+          <i class="bi bi-sort-down"></i>
+          Trier par
+        </label>
+        <select class="form-control"
+                [(ngModel)]="filters.sortBy"
+                (change)="applyFilters()">
+          <option value="date">Date</option>
+          <option value="name">Nom</option>
+          <option value="confidence">Confiance</option>
+          <option value="age">Âge</option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn-text" type="button" (click)="resetFilters()">
+          <i class="bi bi-x-circle"></i>
+          Réinitialiser
+        </button>
+      </div>
+    </div>
+
+    <div class="view-controls">
+      <span class="results-count">{{ filteredEntries.length }} résultat(s)</span>
+      <div class="view-buttons">
+        <button class="view-btn" [class.active]="viewMode === 'list'" type="button" (click)="changeViewMode('list')">
+          <i class="bi bi-list-ul"></i>
+        </button>
+        <button class="view-btn" [class.active]="viewMode === 'grid'" type="button" (click)="changeViewMode('grid')">
+          <i class="bi bi-grid-3x3"></i>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- No Results -->
+  <div class="no-results" *ngIf="filteredEntries.length === 0">
+    <i class="bi bi-inbox"></i>
+    <h3>Aucun résultat</h3>
+    <p>Aucune prédiction ne correspond à vos critères de recherche</p>
+    <button class="btn btn-primary" type="button" (click)="resetFilters()">
+      Réinitialiser les filtres
+    </button>
+  </div>
+
+  <!-- List View -->
+  <section class="entries-list" *ngIf="viewMode === 'list' && displayedEntries.length > 0">
+    <div class="entry-card" *ngFor="let entry of displayedEntries" (click)="selectEntry(entry)">
+      <div class="entry-header">
+        <div class="entry-title">
+          <i class="bi" [ngClass]="entry.babyGender === 'Female' ? 'bi-gender-female' : 'bi-gender-male'"
+             [style.color]="entry.babyGender === 'Female' ? '#f5576c' : '#4A90E2'"></i>
+          <h3>{{ entry.babyName || 'Bébé ' + entry.id.substring(0, 8) }}</h3>
+          <span class="entry-age">{{ entry.babyAge }} jours</span>
+        </div>
+        <div class="entry-actions">
+          <button class="btn-icon" type="button" (click)="deleteEntry(entry, $event)" title="Supprimer">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="entry-body">
+        <div class="entry-info">
+          <div class="info-item">
+            <i class="bi bi-calendar"></i>
+            <span>{{ formatRelativeDate(entry.timestamp) }}</span>
+          </div>
+          <div class="info-item">
+            <i class="bi bi-clock"></i>
+            <span>{{ formatDate(entry.timestamp) }}</span>
+          </div>
+        </div>
+
+        <div class="entry-consensus" [ngClass]="getConsensusClass(entry.consensus)">
+          <i [class]="'bi ' + getConsensusIcon(entry.consensus)"></i>
+          <span class="consensus-label">{{ entry.consensus === 'Healthy' ? 'Bébé Sain' : 'Bébé À Risque' }}</span>
+          <span class="consensus-confidence">{{ entry.consensusConfidence | number:'1.1-1' }}%</span>
+        </div>
+
+        <div class="entry-models">
+          <div class="model-badge" *ngFor="let model of entry.modelsUsed"
+               [style.background]="getModelColor(model)"
+               [title]="getModelDisplayName(model)">
+            {{ getModelDisplayName(model).substring(0, 2) }}
+          </div>
+        </div>
+
+        <div class="entry-metrics">
+          <span><i class="bi bi-check-circle"></i> {{ entry.healthyCount }} Sain</span>
+          <span><i class="bi bi-exclamation-circle"></i> {{ entry.atRiskCount }} Risque</span>
+          <span><i class="bi bi-lightning"></i> {{ entry.avgResponseTime }}ms</span>
+          <span *ngIf="entry.riskFactorsCount > 0">
+            <i class="bi bi-exclamation-triangle"></i> {{ entry.riskFactorsCount }} Facteur(s)
+          </span>
+        </div>
+      </div>
+
+      <div class="entry-details" *ngIf="selectedEntry?.id === entry.id">
+        <div class="details-grid">
+          <div class="detail-item">
+            <span class="detail-label">ID de prédiction</span>
+            <span class="detail-value">{{ entry.id }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Genre</span>
+            <span class="detail-value">{{ entry.babyGender === 'Female' ? 'Féminin' : 'Masculin' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Modèles utilisés</span>
+            <span class="detail-value">{{ entry.modelsUsed.length }} modèles</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Temps de réponse</span>
+            <span class="detail-value">{{ entry.avgResponseTime }}ms</span>
+          </div>
+          <div class="detail-item" *ngIf="entry.notes">
+            <span class="detail-label">Notes</span>
+            <span class="detail-value">{{ entry.notes }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Grid View -->
+  <section class="entries-grid" *ngIf="viewMode === 'grid' && displayedEntries.length > 0">
+    <div class="entry-grid-card" *ngFor="let entry of displayedEntries" (click)="selectEntry(entry)">
+      <div class="grid-card-header" [ngClass]="getConsensusClass(entry.consensus)">
+        <i [class]="'bi ' + getConsensusIcon(entry.consensus)"></i>
+        <span>{{ entry.consensus === 'Healthy' ? 'Sain' : 'À Risque' }}</span>
+      </div>
+
+      <div class="grid-card-body">
+        <div class="grid-card-title">
+          <i class="bi" [ngClass]="entry.babyGender === 'Female' ? 'bi-gender-female' : 'bi-gender-male'"></i>
+          <h4>{{ entry.babyName || 'Bébé ' + entry.id.substring(0, 8) }}</h4>
+        </div>
+
+        <div class="grid-card-info">
+          <div class="grid-info-item">
+            <span class="info-label">Âge</span>
+            <span class="info-value">{{ entry.babyAge }} jours</span>
+          </div>
+          <div class="grid-info-item">
+            <span class="info-label">Confiance</span>
+            <span class="info-value">{{ entry.consensusConfidence | number:'1.0-0' }}%</span>
+          </div>
+          <div class="grid-info-item">
+            <span class="info-label">Date</span>
+            <span class="info-value">{{ formatRelativeDate(entry.timestamp) }}</span>
+          </div>
+        </div>
+
+        <div class="grid-card-models">
+          <div class="model-badge-small" *ngFor="let model of entry.modelsUsed"
+               [style.background]="getModelColor(model)">
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-card-footer">
+        <button class="btn-small" type="button" (click)="deleteEntry(entry, $event)">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pagination -->
+  <section class="pagination-section" *ngIf="totalPages > 1">
+    <div class="pagination-info">
+      <span>Page {{ currentPage }} sur {{ totalPages }}</span>
+      <select class="form-control-sm" [(ngModel)]="itemsPerPage" (change)="changeItemsPerPage(itemsPerPage)">
+        <option [value]="5">5 par page</option>
+        <option [value]="10">10 par page</option>
+        <option [value]="25">25 par page</option>
+        <option [value]="50">50 par page</option>
+      </select>
+    </div>
+
+    <div class="pagination-controls">
+      <button class="pagination-btn"
+              [disabled]="currentPage === 1"
+              type="button"
+              (click)="changePage(1)">
+        <i class="bi bi-chevron-double-left"></i>
+      </button>
+      <button class="pagination-btn"
+              [disabled]="currentPage === 1"
+              type="button"
+              (click)="changePage(currentPage - 1)">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+
+      <button class="pagination-btn"
+              *ngFor="let page of getPaginationPages()"
+              [class.active]="page === currentPage"
+              type="button"
+              (click)="changePage(page)">
+        {{ page }}
+      </button>
+
+      <button class="pagination-btn"
+              [disabled]="currentPage === totalPages"
+              type="button"
+              (click)="changePage(currentPage + 1)">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+      <button class="pagination-btn"
+              [disabled]="currentPage === totalPages"
+              type="button"
+              (click)="changePage(totalPages)">
+        <i class="bi bi-chevron-double-right"></i>
+      </button>
+    </div>
+  </section>
+
+  <!-- Actions -->
+  <section class="history-actions">
+    <button class="btn btn-primary" type="button" (click)="newPrediction()">
+      <i class="bi bi-plus-circle"></i>
+      Nouvelle Prédiction
+    </button>
+    <button class="btn btn-outline" type="button" (click)="goToDashboard()">
+      <i class="bi bi-speedometer2"></i>
+      Retour au Dashboard
+    </button>
+  </section>
+</div>

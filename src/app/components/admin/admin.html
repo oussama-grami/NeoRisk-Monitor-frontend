@@ -1,0 +1,77 @@
+<div class="admin-container">
+  <header class="admin-header">
+    <h1>
+      <i class="bi bi-tools"></i>
+      Administration Firebase
+    </h1>
+    <p class="subtitle">Gérer les données de la base Firebase</p>
+  </header>
+
+  <section class="admin-section">
+    <div class="admin-card">
+      <h2>
+        <i class="bi bi-database-add"></i>
+        Générer des données de test
+      </h2>
+      <p>Remplir la base de données avec des prédictions aléatoires</p>
+
+      <div class="admin-form">
+        <label>Nombre d'entrées à générer :</label>
+        <input type="number" [(ngModel)]="seedCount" min="10" max="1000" class="form-control">
+
+        <button class="btn btn-primary" (click)="seed()" [disabled]="loading">
+          <i class="bi" [class.bi-hourglass-split]="loading" [class.bi-database-add]="!loading"></i>
+          {{ loading ? 'Génération en cours...' : 'Générer ' + seedCount + ' entrées' }}
+        </button>
+      </div>
+
+      <div class="admin-status" *ngIf="message">
+        <i class="bi" [class.bi-check-circle]="!error" [class.bi-exclamation-circle]="error"
+           [style.color]="error ? '#E74C3C' : '#5FCF80'"></i>
+        {{ message }}
+      </div>
+    </div>
+
+    <div class="admin-card danger">
+      <h2>
+        <i class="bi bi-trash"></i>
+        Nettoyer la base de données
+      </h2>
+      <p> Supprimer TOUTES les prédictions de Firebase</p>
+
+      <button class="btn btn-danger" (click)="clear()" [disabled]="loading">
+        <i class="bi bi-trash"></i>
+        Supprimer toutes les données
+      </button>
+    </div>
+  </section>
+
+  <section class="admin-section">
+    <div class="admin-card">
+      <h2>
+        <i class="bi bi-info-circle"></i>
+        Statistiques Firebase
+      </h2>
+
+      <div class="stats-grid" *ngIf="stats">
+        <div class="stat-item">
+          <span class="stat-label">Total entrées</span>
+          <span class="stat-value">{{ stats.total }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Bébés sains</span>
+          <span class="stat-value">{{ stats.healthy }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Bébés à risque</span>
+          <span class="stat-value">{{ stats.atRisk }}</span>
+        </div>
+      </div>
+
+      <button class="btn btn-outline" (click)="loadStats()">
+        <i class="bi bi-arrow-clockwise"></i>
+        Actualiser stats
+      </button>
+    </div>
+  </section>
+</div>
