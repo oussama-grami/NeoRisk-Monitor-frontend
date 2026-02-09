@@ -13,7 +13,7 @@ export class SeederService {
    * @param count Nombre d'entrées à créer
    */
   async seedDatabase(count: number = 50): Promise<void> {
-    console.log(` Démarrage du seed de ${count} entrées...`);
+    console.log(`🌱 Démarrage du seed de ${count} entrées...`);
 
     const names = [
       'Emma', 'Liam', 'Olivia', 'Noah', 'Ava', 'Ethan',
@@ -48,10 +48,29 @@ export class SeederService {
       const atRiskCount = numModels - healthyCount;
       const consensus = healthyCount >= numModels / 2 ? 'Healthy' : 'At Risk';
 
-      // Confiance basée sur l'unanimité
+      // ✅ CORRIGÉ - Confiance basée sur l'unanimité (50-100%)
       const agreement = Math.max(healthyCount, atRiskCount) / numModels;
-      const baseConfidence = 50 + (agreement * 50); // 50-100%
-      const consensusConfidence = baseConfidence + (Math.random() * 10 - 5); // Variation ±5%
+
+      // Si unanimité (100%), confiance entre 90-100%
+      // Si majorité simple (50%), confiance entre 50-75%
+      let consensusConfidence: number;
+
+      if (agreement === 1.0) {
+        // Unanimité : 90-100%
+        consensusConfidence = 90 + Math.random() * 10;
+      } else if (agreement >= 0.75) {
+        // 3 sur 4 : 75-95%
+        consensusConfidence = 75 + Math.random() * 20;
+      } else if (agreement >= 0.66) {
+        // 2 sur 3 : 65-85%
+        consensusConfidence = 65 + Math.random() * 20;
+      } else {
+        // Majorité simple : 50-70%
+        consensusConfidence = 50 + Math.random() * 20;
+      }
+
+      // ✅ SÉCURITÉ : Plafonner à 100%
+      consensusConfidence = Math.min(100, consensusConfidence);
 
       // Âge du bébé (0-30 jours, avec plus de nouveau-nés)
       const babyAge = Math.floor(Math.random() * Math.random() * 30);
@@ -71,7 +90,7 @@ export class SeederService {
         babyAge,
         modelsUsed,
         consensus: consensus as 'Healthy' | 'At Risk',
-        consensusConfidence: Math.round(consensusConfidence * 10) / 10,
+        consensusConfidence: Math.round(consensusConfidence * 10) / 10, // Arrondir à 1 décimale
         healthyCount,
         atRiskCount,
         avgResponseTime,
@@ -85,14 +104,14 @@ export class SeederService {
 
       // Log progression
       if ((i + 1) % 10 === 0) {
-        console.log(` ${i + 1}/${count} entrées préparées...`);
+        console.log(`📊 ${i + 1}/${count} entrées préparées...`);
       }
     }
 
     // Attendre que toutes les insertions soient terminées
     await Promise.all(promises);
 
-    console.log(` Seed terminé ! ${count} entrées ajoutées à Firebase.`);
+    console.log(`✅ Seed terminé ! ${count} entrées ajoutées à Firebase.`);
   }
 
   /**
@@ -101,7 +120,7 @@ export class SeederService {
   async clearDatabase(): Promise<void> {
     console.log('🗑️ Suppression de toutes les données...');
     await this.firebaseHistory.clearAllHistory();
-    console.log(' Base de données nettoyée !');
+    console.log('✅ Base de données nettoyée !');
   }
 
   /**

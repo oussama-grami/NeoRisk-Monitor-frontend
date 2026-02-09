@@ -16,15 +16,12 @@ import { environment } from '../../environments/environment.development';
 export class PredictionService {
   private http = inject(HttpClient);
 
-  // URL de base de votre API Flask depuis l'environnement
-  private baseUrl = environment.apiUrl;
-
-  // URLs des endpoints pour chaque modèle
+  // ✅ NOUVEAU - URLs avec les 4 ports différents
   private endpoints = {
-    [MLModel.DECISION_TREE]: `${this.baseUrl}${environment.apiEndpoints.decisionTree}`,
-    [MLModel.NAIVE_BAYES]: `${this.baseUrl}${environment.apiEndpoints.naiveBayes}`,
-    [MLModel.RANDOM_FOREST]: `${this.baseUrl}${environment.apiEndpoints.randomForest}`,
-    [MLModel.KNN]: `${this.baseUrl}${environment.apiEndpoints.knn}`
+    [MLModel.DECISION_TREE]: `${environment.apiUrls.decisionTree}${environment.apiEndpoints.decisionTree}`,
+    [MLModel.RANDOM_FOREST]: `${environment.apiUrls.randomForest}${environment.apiEndpoints.randomForest}`,
+    [MLModel.KNN]: `${environment.apiUrls.knn}${environment.apiEndpoints.knn}`,
+    [MLModel.NAIVE_BAYES]: `${environment.apiUrls.naiveBayes}${environment.apiEndpoints.naiveBayes}`
   };
 
   private httpOptions = {
@@ -44,14 +41,16 @@ export class PredictionService {
 
     return this.http.post<any>(this.endpoints[model], data, this.httpOptions).pipe(
       map(response => ({
-        prediction: response.prediction || response.risk_level,
-        confidence: response.confidence || this.calculateConfidence(response),
+        prediction: response.prediction,           // 'Healthy' ou 'At Risk'
+        confidence: response.confidence,           // Nombre 0-100
         model_name: model,
         timestamp: new Date().toISOString(),
         response_time_ms: Date.now() - startTime
       } as PredictionResponse)),
       catchError(error => {
-        console.error(`Erreur avec le modèle ${model}:`, error);
+        console.error(`❌ Erreur avec le modèle ${model}:`, error);
+
+        // Retourner une erreur explicite
         return of({
           prediction: 'At Risk',
           confidence: 0,
@@ -69,9 +68,9 @@ export class PredictionService {
   predictWithAllModels(data: BabyHealthData): Observable<ModelComparison> {
     const predictions = {
       decision_tree: this.predictWithModel(MLModel.DECISION_TREE, data),
-      naive_bayes: this.predictWithModel(MLModel.NAIVE_BAYES, data),
       random_forest: this.predictWithModel(MLModel.RANDOM_FOREST, data),
-      knn: this.predictWithModel(MLModel.KNN, data)
+      knn: this.predictWithModel(MLModel.KNN, data),
+      naive_bayes: this.predictWithModel(MLModel.NAIVE_BAYES, data)
     };
 
     return forkJoin(predictions);
@@ -83,13 +82,13 @@ export class PredictionService {
   getConsensus(comparison: ModelComparison): 'Healthy' | 'At Risk' {
     const predictions = [
       comparison.decision_tree.prediction,
-      comparison.naive_bayes.prediction,
       comparison.random_forest.prediction,
-      comparison.knn.prediction
+      comparison.knn.prediction,
+      comparison.naive_bayes.prediction
     ];
 
     const healthyCount = predictions.filter(p => p === 'Healthy').length;
-    return healthyCount >= 3 ? 'Healthy' : 'At Risk';
+    return healthyCount >= 2 ? 'Healthy' : 'At Risk';
   }
 
   /**
@@ -98,9 +97,9 @@ export class PredictionService {
   getConsensusConfidence(comparison: ModelComparison): number {
     const predictions = [
       comparison.decision_tree.prediction,
-      comparison.naive_bayes.prediction,
       comparison.random_forest.prediction,
-      comparison.knn.prediction
+      comparison.knn.prediction,
+      comparison.naive_bayes.prediction
     ];
 
     const healthyCount = predictions.filter(p => p === 'Healthy').length;
@@ -108,77 +107,6 @@ export class PredictionService {
 
     // 100% si tous d'accord, 75% si 3/4, 50% si 2/2
     return (agreement / 4) * 100;
-  }
-
-  /**
-   * Calculer une confiance si elle n'est pas fournie par l'API
-   */
-  private calculateConfidence(response: any): number {
-    // Si l'API retourne une probabilité
-    if (response.probability) {
-      return response.probability * 100;
-    }
-
-    // Si l'API retourne des scores de classe
-    if (response.class_probabilities) {
-      const probs = Object.values(response.class_probabilities) as number[];
-      return Math.max(...probs) * 100;
-    }
-
-    // Valeur par défaut
-    return 85;
-  }
-
-  /**
-   * Simuler une prédiction (pour tests sans backend)
-   */
-  mockPrediction(
-    model: MLModel,
-    data: BabyHealthData
-  ): Observable<PredictionResponse> {
-
-    const riskFactors = this.assessRiskFactors(data);
-    const isAtRisk = riskFactors > 3;
-
-    const prediction: PredictionResponse['prediction'] =
-      isAtRisk ? 'At Risk' : 'Healthy';
-
-    return of({
-      prediction,
-      confidence: Math.random() * 20 + 75,
-      model_name: model,
-      timestamp: new Date().toISOString()
-    }).pipe(delay(300 + Math.random() * 700));
-  }
-
-  /**
-   * Évaluer les facteurs de risque
-   */
-  private assessRiskFactors(data: BabyHealthData): number {
-    let riskCount = 0;
-
-    // Température anormale
-    if (data.temperature_c < 36.5 || data.temperature_c > 37.5) riskCount++;
-
-    // Fréquence cardiaque anormale
-    if (data.heart_rate_bpm < 120 || data.heart_rate_bpm > 160) riskCount++;
-
-    // Fréquence respiratoire anormale
-    if (data.respiratory_rate_bpm < 30 || data.respiratory_rate_bpm > 60) riskCount++;
-
-    // Saturation en oxygène basse
-    if (data.oxygen_saturation < 95) riskCount++;
-
-    // Jaunisse élevée
-    if (data.jaundice_level_mg_dl > 10) riskCount++;
-
-    // Réflexes anormaux
-    if (data.reflexes_normal === 'No') riskCount++;
-
-    // Poids de naissance faible
-    if (data.birth_weight_kg < 2.5) riskCount++;
-
-    return riskCount;
   }
 
   /**

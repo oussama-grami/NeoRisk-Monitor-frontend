@@ -87,14 +87,46 @@ export class Prediction implements OnInit {
     this.checkBackendConnection();
   }
 
+  // ✅ CORRIGÉ - Vérifier la connexion aux 4 backends
   private checkBackendConnection() {
-    this.http.get(`${environment.apiUrl}/api/health`).subscribe({
+    // Vérifier Decision Tree (port 5001)
+    this.http.get(`${environment.apiUrls.decisionTree}/api/health`).subscribe({
       next: (response) => {
-        console.log('✅ Backend connecté:', response);
+        console.log('✅ Decision Tree connecté:', response);
       },
       error: (error) => {
-        console.error('❌ Backend non disponible:', error);
-        alert('⚠️ Le backend Flask n\'est pas accessible. Démarrez-le avec "python app.py"');
+        console.error('❌ Decision Tree non disponible (port 5001):', error);
+      }
+    });
+
+    // Vérifier Random Forest (port 5002)
+    this.http.get(`${environment.apiUrls.randomForest}/api/health`).subscribe({
+      next: (response) => {
+        console.log('✅ Random Forest connecté:', response);
+      },
+      error: (error) => {
+        console.error('❌ Random Forest non disponible (port 5002):', error);
+      }
+    });
+
+    // Vérifier KNN (port 5003)
+    this.http.get(`${environment.apiUrls.knn}/api/health`).subscribe({
+      next: (response) => {
+        console.log('✅ KNN connecté:', response);
+      },
+      error: (error) => {
+        console.error('❌ KNN non disponible (port 5003):', error);
+      }
+    });
+
+    // Vérifier Naive Bayes (port 5004)
+    this.http.get(`${environment.apiUrls.naiveBayes}/api/health`).subscribe({
+      next: (response) => {
+        console.log('✅ Naive Bayes connecté:', response);
+      },
+      error: (error) => {
+        console.error('❌ Naive Bayes non disponible (port 5004):', error);
+        alert('Certains backends Flask ne sont pas accessibles. Démarrez-les');
       }
     });
   }
@@ -224,8 +256,6 @@ export class Prediction implements OnInit {
       for (const model of Array.from(this.selectedModels)) {
         const startTime = Date.now();
 
-        // Ligne ~280 - Dans submitPrediction()
-
         try {
           const response = await this.predictionService
             .predictWithModel(model, apiData)
@@ -252,18 +282,23 @@ export class Prediction implements OnInit {
           console.error(`❌ Erreur avec le modèle ${model}:`, error);
 
           // ✅ ALERTER L'UTILISATEUR
-          alert(`Le modèle ${model} n'a pas pu être contacté. Vérifiez que le backend Flask est actif sur http://localhost:5000`);
+          const modelName = MODEL_CONFIG[model].displayName;
+          const port = model === MLModel.DECISION_TREE ? 5001 :
+            model === MLModel.RANDOM_FOREST ? 5002 :
+              model === MLModel.KNN ? 5003 : 5004;
+
+          alert(`❌ Le modèle "${modelName}" n'a pas pu être contacté (port ${port}).\n\nVérifiez que le backend Flask est actif avec:\npython run_all_models.py`);
 
           // Ne pas ajouter de résultat mock
           continue; // Passer au modèle suivant
         }
-        // Après la boucle de prédictions
+      }
 
-        if (results.length === 0) {
-          this.predictionState = 'error';
-          alert('❌ Aucun modèle ML n\'a pu être contacté. Assurez-vous que le backend Flask est actif.');
-          return;
-        }
+      // Vérifier qu'au moins un modèle a répondu
+      if (results.length === 0) {
+        this.predictionState = 'error';
+        alert('❌ Aucun modèle ML n\'a pu être contacté.\n\nAssurez-vous que les backends Flask sont actifs:\npython run_all_models.py');
+        return;
       }
 
       // Calculer le consensus
@@ -307,7 +342,7 @@ export class Prediction implements OnInit {
     }
   }
 
-  // Préparer les données pour l'API
+  // ✅ CORRIGÉ - Préparer les données pour l'API
   private prepareApiData(): any {
     return {
       gender: this.formData.gender,
@@ -330,7 +365,8 @@ export class Prediction implements OnInit {
       jaundice_level_mg_dl: this.formData.jaundice_level_mg_dl,
       apgar_score: this.formData.apgar_score,
       immunizations_done: this.formData.immunizations_done,
-      reflexes_normal: this.formData.reflexes_normal
+      reflexes_normal: this.formData.reflexes_normal,
+
     };
   }
 
@@ -497,7 +533,6 @@ export class Prediction implements OnInit {
 
   // Naviguer vers l'historique
   saveToHistory() {
-    // TODO: Implémenter la sauvegarde dans l'historique
     this.router.navigate(['/history']);
   }
 
