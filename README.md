@@ -404,23 +404,11 @@ MIT License - Copyright (c) 2025 NeoRisk Monitor
 
 ---
 
-## 👥 Auteurs
-
-Développé par l'équipe NeoRisk Monitor
-
----
-
-## 📞 Contact
-
-- 📧 Email: contact@neorisk-monitor.com
-- 🌐 Frontend: [Repository Angular](https://github.com/votre-username/neorisk-monitor-frontend)
-
----
 
 <div align="center">
 
 **⭐ Si ce projet vous a été utile, donnez-lui une étoile ! ⭐**
 
-Made with ❤️ by NeoRisk Monitor Team
+Made with ❤️
 
 </div>
