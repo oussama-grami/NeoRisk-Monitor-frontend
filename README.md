@@ -86,7 +86,7 @@ NeoRisk Monitor Backend expose 4 modèles ML pour classifier l'état de santé d
 **Port:** 5003 | **Endpoint:** `/knn/predict`
 
 **Performance:**
-- ✅ Accuracy: **80.0%**
+- ✅ Accuracy: **95.0%**
 - 📊 Precision: **84.0%**
 - 🎯 Recall: **74.0%**
 - 🔥 F1-Score: **79.0%**
