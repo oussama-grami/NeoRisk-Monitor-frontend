@@ -7,9 +7,6 @@ import {
   CollectionReference,
   DocumentData
 } from '@angular/fire/firestore';
-// Source - https://stackoverflow.com/a
-// Posted by Daniel Albert
-// Retrieved 2026-01-23, License - CC BY-SA 4.0
 import { Observable, map } from 'rxjs';
 import { HistoryEntry } from '../models/history.model';
 import { ModelPerformance, ComparisonStats } from '../models/comparison.model';
@@ -68,10 +65,11 @@ export class FirebaseStatsService {
           e.timestamp >= sevenDaysAgo
         ).length;
 
-        // Accuracy moyenne
-        const avgAccuracy = entries.length > 0
-          ? entries.reduce((sum, e) => sum + e.consensusConfidence, 0) / entries.length
-          : 0;
+        // ✅ Accuracy moyenne des MÉTRIQUES STATIQUES
+        const models = [MLModel.DECISION_TREE, MLModel.NAIVE_BAYES, MLModel.RANDOM_FOREST, MLModel.KNN];
+        const avgAccuracy = models.reduce((sum, model) =>
+          sum + MODEL_CONFIG[model].staticMetrics.accuracy, 0
+        ) / models.length;
 
         // 10 dernières prédictions
         const recentPredictions = [...entries]
@@ -113,7 +111,7 @@ export class FirebaseStatsService {
   }
 
   /**
-   * Calculer les performances de chaque modèle
+   * ✅ Calculer les performances de chaque modèle (STATIQUES + DYNAMIQUES)
    */
   private calculateModelPerformances(entries: HistoryEntry[]): ModelPerformance[] {
 
@@ -132,36 +130,19 @@ export class FirebaseStatsService {
 
       const config = MODEL_CONFIG[model];
 
-      if (modelEntries.length === 0) {
-        return {
-          model,
-          modelName: config.name,
-          displayName: config.displayName,
-          color: config.color,
-          icon: config.icon,
-          accuracy: 0,
-          precision: 0,
-          recall: 0,
-          f1Score: 0,
-          avgResponseTime: 0,
-          totalPredictions: 0,
-          successRate: 0
-        };
-      }
+      // ✅ MÉTRIQUES STATIQUES (provenant de l'évaluation)
+      const { accuracy, precision, recall, f1Score } = config.staticMetrics;
 
+      // 📊 MÉTRIQUES DYNAMIQUES (calculées depuis Firebase)
       const totalPredictions = modelEntries.length;
 
-      const avgConfidence =
-        modelEntries.reduce((sum, e) => sum + e.consensusConfidence, 0) / totalPredictions;
+      const avgResponseTime = totalPredictions > 0
+        ? modelEntries.reduce((sum, e) => sum + e.avgResponseTime, 0) / totalPredictions
+        : 0;
 
-      const healthyRate =
-        (modelEntries.filter(e => e.consensus === 'Healthy').length / totalPredictions) * 100;
-
-      const avgResponseTime =
-        modelEntries.reduce((sum, e) => sum + e.avgResponseTime, 0) / totalPredictions;
-
-      const successRate =
-        (modelEntries.filter(e => e.consensusConfidence >= 80).length / totalPredictions) * 100;
+      const successRate = totalPredictions > 0
+        ? (modelEntries.filter(e => e.consensusConfidence >= 80).length / totalPredictions) * 100
+        : 0;
 
       return {
         model,
@@ -169,10 +150,12 @@ export class FirebaseStatsService {
         displayName: config.displayName,
         color: config.color,
         icon: config.icon,
-        accuracy: Math.round(avgConfidence * 10) / 10,
-        precision: Math.round(healthyRate * 10) / 10,
-        recall: Math.round(healthyRate * 10) / 10,
-        f1Score: Math.round(healthyRate * 10) / 10,
+        // 🔒 STATIQUES
+        accuracy,
+        precision,
+        recall,
+        f1Score,
+        // 📊 DYNAMIQUES
         avgResponseTime: Math.round(avgResponseTime),
         totalPredictions,
         successRate: Math.round(successRate * 10) / 10

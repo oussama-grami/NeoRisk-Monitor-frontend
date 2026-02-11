@@ -1,4 +1,4 @@
-import { MLModel } from './baby-health.model';
+import { MLModel, MODEL_CONFIG } from './baby-health.model';
 
 // Métrique de performance d'un modèle
 export interface ModelPerformance {
@@ -77,7 +77,7 @@ export const DEFAULT_COMPARISON_CONFIG: ComparisonConfig = {
   ascending: false
 };
 
-// Helper pour créer des données de performance simulées
+// ✅ Helper pour créer des données de performance (AVEC MÉTRIQUES STATIQUES)
 export function createMockPerformanceData(): ModelPerformance[] {
   return [
     {
@@ -86,12 +86,14 @@ export function createMockPerformanceData(): ModelPerformance[] {
       displayName: 'Arbre de Décision',
       color: '#667eea',
       icon: 'bi-diagram-3',
-      accuracy: 92.5,
-      precision: 91.8,
-      recall: 93.2,
-      f1Score: 92.5,
+      // 🔒 MÉTRIQUES STATIQUES
+      accuracy: MODEL_CONFIG[MLModel.DECISION_TREE].staticMetrics.accuracy,
+      precision: MODEL_CONFIG[MLModel.DECISION_TREE].staticMetrics.precision,
+      recall: MODEL_CONFIG[MLModel.DECISION_TREE].staticMetrics.recall,
+      f1Score: MODEL_CONFIG[MLModel.DECISION_TREE].staticMetrics.f1Score,
+      // 📊 MÉTRIQUES DYNAMIQUES (fallback mock)
       avgResponseTime: 145,
-      totalPredictions: 1247,
+      totalPredictions: 0,
       successRate: 98.2
     },
     {
@@ -100,12 +102,12 @@ export function createMockPerformanceData(): ModelPerformance[] {
       displayName: 'Naive Bayes',
       color: '#f5576c',
       icon: 'bi-calculator',
-      accuracy: 89.8,
-      precision: 88.5,
-      recall: 91.0,
-      f1Score: 89.7,
+      accuracy: MODEL_CONFIG[MLModel.NAIVE_BAYES].staticMetrics.accuracy,
+      precision: MODEL_CONFIG[MLModel.NAIVE_BAYES].staticMetrics.precision,
+      recall: MODEL_CONFIG[MLModel.NAIVE_BAYES].staticMetrics.recall,
+      f1Score: MODEL_CONFIG[MLModel.NAIVE_BAYES].staticMetrics.f1Score,
       avgResponseTime: 98,
-      totalPredictions: 1186,
+      totalPredictions: 0,
       successRate: 97.8
     },
     {
@@ -114,12 +116,12 @@ export function createMockPerformanceData(): ModelPerformance[] {
       displayName: 'Forêt Aléatoire',
       color: '#00f2fe',
       icon: 'bi-trees',
-      accuracy: 95.7,
-      precision: 95.2,
-      recall: 96.1,
-      f1Score: 95.6,
+      accuracy: MODEL_CONFIG[MLModel.RANDOM_FOREST].staticMetrics.accuracy,
+      precision: MODEL_CONFIG[MLModel.RANDOM_FOREST].staticMetrics.precision,
+      recall: MODEL_CONFIG[MLModel.RANDOM_FOREST].staticMetrics.recall,
+      f1Score: MODEL_CONFIG[MLModel.RANDOM_FOREST].staticMetrics.f1Score,
       avgResponseTime: 178,
-      totalPredictions: 1302,
+      totalPredictions: 0,
       successRate: 99.1
     },
     {
@@ -128,12 +130,12 @@ export function createMockPerformanceData(): ModelPerformance[] {
       displayName: 'K Plus Proches Voisins',
       color: '#38f9d7',
       icon: 'bi-hexagon',
-      accuracy: 91.3,
-      precision: 90.7,
-      recall: 92.0,
-      f1Score: 91.3,
+      accuracy: MODEL_CONFIG[MLModel.KNN].staticMetrics.accuracy,
+      precision: MODEL_CONFIG[MLModel.KNN].staticMetrics.precision,
+      recall: MODEL_CONFIG[MLModel.KNN].staticMetrics.recall,
+      f1Score: MODEL_CONFIG[MLModel.KNN].staticMetrics.f1Score,
       avgResponseTime: 132,
-      totalPredictions: 1215,
+      totalPredictions: 0,
       successRate: 98.5
     }
   ];

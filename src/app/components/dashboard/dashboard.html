@@ -7,7 +7,6 @@
           <i class="bi bi-speedometer2"></i>
           Tableau de Bord
         </h1>
-        <p class="subtitle">Vue d'ensemble du système de surveillance santé</p>
       </div>
       <div class="header-actions">
         <button class="btn btn-primary btn-lg" (click)="goToPrediction()">
@@ -29,13 +28,13 @@
         <h3 class="stat-label">{{ stat.label }}</h3>
         <div class="stat-value-container">
           <span class="stat-value">{{ stat.value }}</span>
-          <span class="stat-trend" [class.trend-up]="stat.trend === 'up'"
-                [class.trend-down]="stat.trend === 'down'">
-            <i class="bi" [class.bi-arrow-up]="stat.trend === 'up'"
-               [class.bi-arrow-down]="stat.trend === 'down'"
-               [class.bi-dash]="stat.trend === 'stable'"></i>
-            {{ stat.trendValue }}
-          </span>
+<!--          <span class="stat-trend" [class.trend-up]="stat.trend === 'up'"-->
+<!--                [class.trend-down]="stat.trend === 'down'">-->
+<!--            <i class="bi" [class.bi-arrow-up]="stat.trend === 'up'"-->
+<!--               [class.bi-arrow-down]="stat.trend === 'down'"-->
+<!--               [class.bi-dash]="stat.trend === 'stable'"></i>-->
+<!--            {{ stat.trendValue }}-->
+<!--          </span>-->
         </div>
       </div>
     </div>

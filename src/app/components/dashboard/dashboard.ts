@@ -187,9 +187,9 @@ export class Dashboard implements OnInit {
         displayName: MODEL_CONFIG[MLModel.DECISION_TREE].displayName,
         color: MODEL_CONFIG[MLModel.DECISION_TREE].color,
         icon: MODEL_CONFIG[MLModel.DECISION_TREE].icon,
-        accuracy: 92.5,
-        predictions: 312,
-        avgResponseTime: 145
+        accuracy: 91.3,
+        predictions: 0,
+        avgResponseTime: 0
       },
       {
         model: MLModel.NAIVE_BAYES,
@@ -198,8 +198,8 @@ export class Dashboard implements OnInit {
         color: MODEL_CONFIG[MLModel.NAIVE_BAYES].color,
         icon: MODEL_CONFIG[MLModel.NAIVE_BAYES].icon,
         accuracy: 89.8,
-        predictions: 298,
-        avgResponseTime: 98
+        predictions: 0,
+        avgResponseTime: 0
       },
       {
         model: MLModel.RANDOM_FOREST,

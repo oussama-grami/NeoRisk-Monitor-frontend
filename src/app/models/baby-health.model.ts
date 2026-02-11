@@ -70,35 +70,60 @@ export enum MLModel {
   KNN = 'knn'
 }
 
-// Configuration des modèles avec couleurs et icônes
+// ✅ Configuration des modèles avec métriques STATIQUES
 export const MODEL_CONFIG = {
   [MLModel.DECISION_TREE]: {
     name: 'Decision Tree',
     displayName: 'Arbre de Décision',
     color: '#667eea',
     icon: 'bi-diagram-3',
-    description: 'Classification par arbre de décision'
+    description: 'Classification par arbre de décision',
+    // 🔒 MÉTRIQUES STATIQUES (issues de l'évaluation du modèle)
+    staticMetrics: {
+      accuracy: 91.3,
+      precision: 90.8,
+      recall: 90.5,
+      f1Score: 90.6
+    }
   },
   [MLModel.NAIVE_BAYES]: {
     name: 'Naive Bayes',
     displayName: 'Naive Bayes',
     color: '#f5576c',
     icon: 'bi-graph-up',
-    description: 'Classification probabiliste bayésienne'
+    description: 'Classification probabiliste bayésienne',
+    staticMetrics: {
+      accuracy: 94.2,
+      precision: 94.5,
+      recall: 94.2,
+      f1Score: 94.3
+    }
   },
   [MLModel.RANDOM_FOREST]: {
     name: 'Random Forest',
     displayName: 'Forêt Aléatoire',
     color: '#00f2fe',
     icon: 'bi-tree',
-    description: 'Ensemble d\'arbres de décision'
+    description: 'Ensemble d\'arbres de décision',
+    staticMetrics: {
+      accuracy: 97.0,
+      precision: 87.0,
+      recall: 93.0,
+      f1Score: 90.0
+    }
   },
   [MLModel.KNN]: {
     name: 'K-Nearest Neighbors',
-    displayName: 'K Plus Proches Voisins',
+    displayName: 'KPPV',
     color: '#38f9d7',
     icon: 'bi-bullseye',
-    description: 'Classification par proximité'
+    description: 'Classification par proximité',
+    staticMetrics: {
+      accuracy: 95.0,
+      precision: 84.0,
+      recall: 74.0,
+      f1Score: 79.0
+    }
   }
 };
 
