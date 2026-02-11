@@ -267,7 +267,7 @@ export const MODEL_CONFIG = {
     color: '#38f9d7',
     icon: 'bi-bullseye',
     staticMetrics: {
-      accuracy: 80.0,
+      accuracy: 95.0,
       precision: 84.0,
       recall: 74.0,
       f1Score: 79.0
@@ -296,7 +296,7 @@ export const MODEL_CONFIG = {
 | **Random Forest** | 🥇 **97.0%** | 87.0% | **93.0%** | 90.0% |
 | **Naive Bayes** | 🥈 **94.2%** | **94.5%** | 94.2% | **94.3%** |
 | **Decision Tree** | 🥉 **91.3%** | 90.8% | 90.5% | 90.6% |
-| **KNN** | **80.0%** | 84.0% | 74.0% | 79.0% |
+| **KNN** | **95.0%** | 84.0% | 74.0% | 79.0% |
 
 ---
 
