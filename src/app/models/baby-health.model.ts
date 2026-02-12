@@ -80,10 +80,10 @@ export const MODEL_CONFIG = {
     description: 'Classification par arbre de décision',
     // 🔒 MÉTRIQUES STATIQUES (issues de l'évaluation du modèle)
     staticMetrics: {
-      accuracy: 91.3,
-      precision: 90.8,
-      recall: 90.5,
-      f1Score: 90.6
+      accuracy: 97,
+      precision: 82,
+      recall: 100,
+      f1Score: 90
     }
   },
   [MLModel.NAIVE_BAYES]: {
